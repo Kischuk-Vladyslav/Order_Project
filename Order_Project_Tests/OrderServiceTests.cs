@@ -1,7 +1,7 @@
 ﻿using Moq;
 using Order_Project.Services;
 using Order_Project.Services.Intefraces;
-
+using Order_Project.Models;
 namespace Order_Project_Tests
 {
     public class OrderServiceTests
@@ -55,5 +55,55 @@ namespace Order_Project_Tests
             // Assert
             Assert.Throws<ArgumentException>(action);
         }
+
+        /// <summary>
+        /// Tests whether Order object c=reated sucessfully after valid input
+        /// </summary>
+        [Fact]
+        public void CreateOrder_ValidInput_ReturnsOrder()
+        {
+            // Arrange
+            _inventoryMock.Setup(i => i.CheckStock(It.IsAny<string>(), It.IsAny<int>())).Returns(true);
+            _paymentMock.Setup(p => p.ProcessPayment(It.IsAny<Order>())).Returns(true);
+
+            // Act
+            var order = _service.CreateOrder("Product", 1);
+
+            // Assert
+            Assert.Equal("Product", order.Product);
+            Assert.Equal(1, order.Quantity);
+        }
+
+        /// <summary>
+        /// Tests if CreateOrder() throws InvalidOperationException if not enough stock
+        /// </summary>
+        [Fact]
+        public void CreateOrder_NotEnoughStock_ThrowsInvalidOperationException()
+        {
+            // Arrange
+            _inventoryMock.Setup(i => i.CheckStock(It.IsAny<string>(), It.IsAny<int>())).Returns(false);
+
+            // Act
+            void action() => _service.CreateOrder("Product", 1);
+
+            // Assert
+            Assert.Throws<InvalidOperationException>(action);
+        }
+
+        [Fact]
+        public void CreateOrder_PaymentFails_ThrowsInvalidOperationException()
+        {
+            // Arrange
+            _inventoryMock.Setup(i => i.CheckStock(It.IsAny<string>(), It.IsAny<int>())).Returns(true);
+            _paymentMock.Setup(p => p.ProcessPayment(It.IsAny<Order>())).Returns(false);
+
+            // Act
+            void action() => _service.CreateOrder("Product", 1);
+
+            // Assert
+            Assert.Throws<InvalidOperationException>(action);
+        }
+
+
     }
 }
