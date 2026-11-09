@@ -161,13 +161,30 @@ namespace Order_Project_Tests
         }
 
         /// <summary>
+        /// Checks whether CreateOrder does not return null after order creation
+        /// </summary>
+        [Fact]
+        public void CreateOrder_ValidOrder_DoesntReturnNull()
+        {
+            // Arrange
+            _inventoryMock.Setup(i => i.CheckStock(It.IsAny<string>(), It.IsAny<int>())).Returns(true);
+            _paymentMock.Setup(p => p.ProcessPayment(It.IsAny<Order>())).Returns(true);
+
+            // Act
+            var order = _service.CreateOrder("Product", 1);
+
+            // Assert
+            Assert.NotNull(order);
+        }
+
+        /// <summary>
         /// Checks whether UpdateOrder() method returns false when orderId is not found
         /// </summary>
         [Fact]
         public void UpdateOrder_OrderIdNotFound_ReturnsFalse()
         {
             // Act
-            var result = _service.UpdateOrder(999, 5);
+            var result = _service.UpdateOrder(999, 2);
 
             // Assert
             Assert.False(result);
@@ -205,10 +222,90 @@ namespace Order_Project_Tests
             var order = _service.CreateOrder("Product", 1);
 
             // Act
-            var result = _service.UpdateOrder(order.Id, 5);
+            var result = _service.UpdateOrder(order.Id, 2);
 
             // Assert
             Assert.True(result);
+        }
+
+        /// <summary>
+        /// Checks whether UpdateOrder() method correctly updates the order quantity when valid orderId and newQuantity are provided
+        /// </summary>
+        [Fact]
+        public void UpdateOrder_ValidOrderIdAndNewQuantity_UpdatesOrderQuantity()
+        {
+            // Arrange
+            _inventoryMock.Setup(i => i.CheckStock(It.IsAny<string>(), It.IsAny<int>())).Returns(true);
+            _paymentMock.Setup(p => p.ProcessPayment(It.IsAny<Order>())).Returns(true);
+            var order = _service.CreateOrder("Product", 1);
+            // Act
+            _service.UpdateOrder(order.Id, 2);
+            // Assert
+            var updatedOrder = _service.GetOrders().Find(o => o.Id == order.Id);
+            Assert.Equal(2, updatedOrder.Quantity);
+        }
+
+        [Fact]
+        public void UpdateOrder_ValidData_ChangesQuantity()
+        {
+            // Arrange
+            _inventoryMock.Setup(i => i.CheckStock(It.IsAny<string>(), It.IsAny<int>())).Returns(true);
+            _paymentMock.Setup(p => p.ProcessPayment(It.IsAny<Order>())).Returns(true);
+
+            var order = _service.CreateOrder("Laptop", 1);
+            int oldQuantity = order.Quantity;
+
+            // Act
+            _service.UpdateOrder(order.Id, 5);
+
+            // Assert
+            Assert.NotEqual(oldQuantity, order.Quantity);
+        }
+
+        /// <summary>
+        /// Checks whether RemoveOrder() method correctly increases inventory stock when an order is removed
+        /// </summary>
+        [Fact]
+        public void RemoveOrder_ValidData_IncreasesInventoryStock()
+        {
+            // Arrange
+            _inventoryMock.Setup(i => i.CheckStock(It.IsAny<string>(), It.IsAny<int>())).Returns(true);
+            _paymentMock.Setup(p => p.ProcessPayment(It.IsAny<Order>())).Returns(true);
+            var order = _service.CreateOrder("Product", 1);
+
+            // Act
+            _service.RemoveOrder(order.Id);
+
+            // Assert
+            _inventoryMock.Verify(i => i.IncreaseStock(It.IsAny<string>(), It.IsAny<int>()), Times.Once);
+        }
+
+        /// <summary>
+        /// Checks whether RemoveOrder() method correctly removes the order from the list when valid data is provided
+        /// </summary>
+        [Fact]
+        public void RemoveOrder_ValidData_RemovesOrderFromList()
+        {
+            // Arrange
+            _inventoryMock.Setup(i => i.CheckStock(It.IsAny<string>(), It.IsAny<int>())).Returns(true);
+            _paymentMock.Setup(p => p.ProcessPayment(It.IsAny<Order>())).Returns(true);
+            var order = _service.CreateOrder("Product", 1);
+
+            // Act
+            _service.RemoveOrder(order.Id);
+
+            // Assert
+            Assert.DoesNotContain(order, _service.GetOrders());
+        }
+
+        [Fact]
+        public void GetOrders_NoOrders_ReturnsEmptyList()
+        {
+            // Act
+            var result = _service.GetOrders();
+
+            // Assert
+            Assert.Empty(result);
         }
     }
 }
