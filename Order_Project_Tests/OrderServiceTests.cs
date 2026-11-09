@@ -1,7 +1,8 @@
 ﻿using Moq;
+using Order_Project.Models;
 using Order_Project.Services;
 using Order_Project.Services.Intefraces;
-using Order_Project.Models;
+
 namespace Order_Project_Tests
 {
     public class OrderServiceTests
@@ -245,6 +246,9 @@ namespace Order_Project_Tests
             Assert.Equal(2, updatedOrder.Quantity);
         }
 
+        /// <summary>
+        /// Cheks whether UpdateOrder() changes quantity of given order upon upate
+        /// </summary>
         [Fact]
         public void UpdateOrder_ValidData_ChangesQuantity()
         {
@@ -298,6 +302,9 @@ namespace Order_Project_Tests
             Assert.DoesNotContain(order, _service.GetOrders());
         }
 
+        /// <summary>
+        /// Checks whether GetOrders() method returns an empty list when there are no orders
+        /// </summary>
         [Fact]
         public void GetOrders_NoOrders_ReturnsEmptyList()
         {
